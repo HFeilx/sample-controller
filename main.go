@@ -60,9 +60,9 @@ func main() {
 	}
 
 	/*
-	Informer 在使用时需要先初始化一个 InformerFactory，目前主要推荐使用的是 SharedInformerFactory，
-	Shared 指的是在多个 Informer 中共享一个本地 cache
-	informer watch apiserver,每隔 30 秒 resync 一次(list)
+		Informer 在使用时需要先初始化一个 InformerFactory，目前主要推荐使用的是 SharedInformerFactory，
+		Shared 指的是在多个 Informer 中共享一个本地 cache
+		informer watch apiserver,每隔 30 秒 resync 一次(list)
 	*/
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
@@ -72,8 +72,6 @@ func main() {
 		kubeInformerFactory.Apps().V1().Deployments(),
 		exampleInformerFactory.Samplecontroller().V1alpha1().Foos())
 
-	// notice that there is no need to run Start methods in a separate goroutine. (i.e. go kubeInformerFactory.Start(stopCh)
-	// Start method is non-blocking and runs all registered informers in a dedicated goroutine.
 	kubeInformerFactory.Start(stopCh)
 	exampleInformerFactory.Start(stopCh)
 

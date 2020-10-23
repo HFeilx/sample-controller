@@ -47,7 +47,6 @@ import (
 const controllerAgentName = "sample-controller"
 
 const (
-
 	SuccessSynced = "Synced"
 
 	ErrResourceExists = "ErrResourceExists"
@@ -57,9 +56,7 @@ const (
 	MessageResourceSynced = "Foo synced successfully"
 )
 
-
 type Controller struct {
-
 	kubeclientset kubernetes.Interface
 
 	sampleclientset clientset.Interface
@@ -74,13 +71,11 @@ type Controller struct {
 	recorder record.EventRecorder
 }
 
-
 func NewController(
 	kubeclientset kubernetes.Interface,
 	sampleclientset clientset.Interface,
 	deploymentInformer appsinformers.DeploymentInformer,
 	fooInformer informers.FooInformer) *Controller {
-
 
 	utilruntime.Must(samplescheme.AddToScheme(scheme.Scheme))
 	klog.V(4).Info("Creating event broadcaster")
@@ -101,6 +96,10 @@ func NewController(
 	}
 
 	klog.Info("Setting up event handlers")
+
+	/*
+		基于观察者模式注册事件
+	*/
 
 	fooInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueFoo,
@@ -126,14 +125,11 @@ func NewController(
 	return controller
 }
 
-
 func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer utilruntime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
-
 	klog.Info("Starting Foo controller")
-
 
 	klog.Info("Waiting for informer caches to sync")
 	if ok := cache.WaitForCacheSync(stopCh, c.deploymentsSynced, c.foosSynced); !ok {
@@ -153,12 +149,10 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	return nil
 }
 
-
 func (c *Controller) runWorker() {
 	for c.processNextWorkItem() {
 	}
 }
-
 
 func (c *Controller) processNextWorkItem() bool {
 	obj, shutdown := c.workqueue.Get()
@@ -200,7 +194,6 @@ func (c *Controller) processNextWorkItem() bool {
 	return true
 }
 
-
 func (c *Controller) syncHandler(key string) error {
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
@@ -214,10 +207,9 @@ func (c *Controller) syncHandler(key string) error {
 
 	//foo.Name="test-foo"
 
-    //res,_:=c.sampleclientset.SamplecontrollerV1alpha1().Foos(namespace).Update(context.TODO(), foo,metav1.UpdateOptions{})
+	//res,_:=c.sampleclientset.SamplecontrollerV1alpha1().Foos(namespace).Update(context.TODO(), foo,metav1.UpdateOptions{})
 
 	//klog.Infof("",res)
-
 
 	if err != nil {
 		// The Foo resource may no longer exist, in which case we stop
@@ -247,11 +239,9 @@ func (c *Controller) syncHandler(key string) error {
 		deployment, err = c.kubeclientset.AppsV1().Deployments(foo.Namespace).Create(context.TODO(), newDeployment(foo), metav1.CreateOptions{})
 	}
 
-
 	if err != nil {
 		return err
 	}
-
 
 	if !metav1.IsControlledBy(deployment, foo) {
 		msg := fmt.Sprintf(MessageResourceExists, deployment.Name)
@@ -259,17 +249,14 @@ func (c *Controller) syncHandler(key string) error {
 		return fmt.Errorf(msg)
 	}
 
-
 	if foo.Spec.Replicas != nil && *foo.Spec.Replicas != *deployment.Spec.Replicas {
 		klog.V(4).Infof("Foo %s replicas: %d, deployment replicas: %d", name, *foo.Spec.Replicas, *deployment.Spec.Replicas)
 		deployment, err = c.kubeclientset.AppsV1().Deployments(foo.Namespace).Update(context.TODO(), newDeployment(foo), metav1.UpdateOptions{})
 	}
 
-
 	if err != nil {
 		return err
 	}
-
 
 	err = c.updateFooStatus(foo, deployment)
 	if err != nil {
@@ -288,7 +275,6 @@ func (c *Controller) updateFooStatus(foo *samplev1alpha1.Foo, deployment *appsv1
 	_, err := c.sampleclientset.SamplecontrollerV1alpha1().Foos(foo.Namespace).Update(context.TODO(), fooCopy, metav1.UpdateOptions{})
 	return err
 }
-
 
 func (c *Controller) enqueueFoo(obj interface{}) {
 	var key string
@@ -342,7 +328,6 @@ func (c *Controller) handleObject(obj interface{}) {
 		return
 	}
 }
-
 
 func newDeployment(foo *samplev1alpha1.Foo) *appsv1.Deployment {
 	labels := map[string]string{

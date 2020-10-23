@@ -62,12 +62,14 @@ func NewFilteredDeploymentInformer(client kubernetes.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
+				//调用apiserver获取Deployments列表
 				return client.AppsV1().Deployments(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
+				//调用apiserver监控Deployments列表
 				return client.AppsV1().Deployments(namespace).Watch(context.TODO(), options)
 			},
 		},
@@ -76,12 +78,15 @@ func NewFilteredDeploymentInformer(client kubernetes.Interface, namespace string
 		indexers,
 	)
 }
-
+//创建informer
 func (f *deploymentInformer) defaultInformer(client kubernetes.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
 	return NewFilteredDeploymentInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *deploymentInformer) Informer() cache.SharedIndexInformer {
+
+	//传入上面定义的defaultInformer方法，用于创建informer
+
 	return f.factory.InformerFor(&appsv1.Deployment{}, f.defaultInformer)
 }
 

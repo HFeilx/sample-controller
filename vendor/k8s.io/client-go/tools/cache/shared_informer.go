@@ -469,23 +469,20 @@ func (s *sharedIndexInformer) AddEventHandlerWithResyncPeriod(handler ResourceEv
 			}
 		}
 	}
-
+	//初始化监听器
 	listener := newProcessListener(handler, resyncPeriod, determineResyncPeriod(resyncPeriod, s.resyncCheckPeriod), s.clock.Now(), initialBufferSize)
-
+	//如果informer还没启动，那么直接将监听器加入到processor监听器列表中
 	if !s.started {
 		s.processor.addListener(listener)
 		return
 	}
 
-	// in order to safely join, we have to
-	// 1. stop sending add/update/delete notifications
-	// 2. do a list against the store
-	// 3. send synthetic "Add" events to the new handler
-	// 4. unblock
+	//如果informer已经启动，那么需要加锁
 	s.blockDeltas.Lock()
 	defer s.blockDeltas.Unlock()
 
 	s.processor.addListener(listener)
+	//然后将indexer中缓存的数据写入到listener中
 	for _, item := range s.indexer.List() {
 		listener.add(addNotification{newObj: item})
 	}

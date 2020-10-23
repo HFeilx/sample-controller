@@ -160,23 +160,22 @@ func (f *sharedInformerFactory) WaitForCacheSync(stopCh <-chan struct{}) map[ref
 	return res
 }
 
-// InternalInformerFor returns the SharedIndexInformer for obj using an internal
-// client.
 func (f *sharedInformerFactory) InformerFor(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc) cache.SharedIndexInformer {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-
+	//获取informer类型
 	informerType := reflect.TypeOf(obj)
+	//查找map缓存,如果存在,那么直接返回
 	informer, exists := f.informers[informerType]
 	if exists {
 		return informer
 	}
-
+	//根据类型查找resync的周期
 	resyncPeriod, exists := f.customResync[informerType]
 	if !exists {
 		resyncPeriod = f.defaultResync
 	}
-
+	//调用defaultInformer方法创建informer
 	informer = newFunc(f.client, resyncPeriod)
 	f.informers[informerType] = informer
 
